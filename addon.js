@@ -1,6 +1,8 @@
 const { addonBuilder } = require("stremio-addon-sdk")
-st = require("./strm")
-film = st()
+const sqlite3 = require('./aa-sqlite')
+// open the database
+sqlite3.open('./streams.db');
+
 catal = require("./cat")
 cat = catal()
 
@@ -24,7 +26,8 @@ const manifest = {
 		"stream"
 	],
 	"types": [
-		"movie"
+		"movie",
+		"series"
 	],
 	"name": "FilmesDublados",
 	"description": "Dublados"
@@ -40,14 +43,16 @@ builder.defineCatalogHandler(({type, id, extra}) => {
 })
 
 
-builder.defineStreamHandler(({type, id}) => {
+builder.defineStreamHandler(async({type, id}) =>  {
+	console.log(id) 
     // Docs: https://github.com/Stremio/stremio-addon-sdk/blob/master/docs/api/requests/defineStreamHandler.md
+	
+	var sql = "SELECT infoHash as infoHash, title as title FROM stream WHERE imdbId  = ? ";
 
-	if (type === "movie"){
-			
-			const stream = film[id][0]
-			return Promise.resolve({ streams: [stream] })
-    }
+	r = await sqlite3.all(sql, [id])
+
+	return  Promise.resolve({ streams: [r[0]] })
+	
 })
 
 module.exports = builder.getInterface()
